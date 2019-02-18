@@ -1,9 +1,7 @@
-// Copyright © 2018 Andy Goryachev <andy@goryachev.com>
+// Copyright © 2018-2019 Andy Goryachev <andy@goryachev.com>
 package goryachev.bugs.fx;
 import javafx.application.Application;
 import javafx.geometry.Point2D;
-import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.PopupControl;
@@ -24,9 +22,15 @@ import javafx.stage.Stage;
 public class DualFocus
 	extends Application
 {
-	protected FxPopup popup;
-	protected PopupBox popupBox;
+	protected PopupControl popup;
+	protected BorderPane popupBox;
 	protected TextField textField;
+	
+	
+	public static void main(String[] args)
+	{
+		launch(args);
+	}
 	
 	
 	public DualFocus()
@@ -44,8 +48,9 @@ public class DualFocus
 		textArea.setText
 		(
 			"\n\n\n" +
-			"Notice that both the text field and the check box have focus.\n" +
-			"Pressing SPACE adds a space in the text field as well as toggles the check box.\n" +
+			"1. Click on the text field.\n" +
+			"2. Notice that both the text field and the check box have focus.\n" +
+			"3. Press SPACE.  Notice both both text field and check box have the input focus.\n" +
 			"\n" +
 			"Only one component is expected to have focus."
 		);
@@ -78,12 +83,23 @@ public class DualFocus
 	{
 		if(popup == null)
 		{
-			popupBox = new PopupBox();
-			popupBox.setManaged(false);
+			popupBox = new BorderPane();
+			popupBox.setLeft(new CheckBox("why do both popup and text field have the input focus?"));
+			popupBox.setStyle("-fx-background-color:red; -fx-background-radius:10; -fx-padding:10px;");
 			
-			popup = new FxPopup(popupBox);
+			popup = new PopupControl();
+			popup.getScene().setRoot(popupBox);
+			popup.setConsumeAutoHidingEvents(false);
+			popup.setAutoFix(true);
 			popup.setAutoHide(false);
-			popup.showRelative(textField, textField.getLayoutX(), textField.getLayoutY() + textField.getHeight());
+			
+			popupBox.applyCss();
+			
+			double dx = textField.getLayoutX();
+			double dy = textField.getLayoutY() + textField.getHeight();
+			
+			Point2D p = textField.localToScreen(0, 0);
+			popup.show(textField, p.getX() + dx, p.getY() + dy);
 		}
 	}
 	
@@ -99,46 +115,6 @@ public class DualFocus
 		if(popupBox != null)
 		{
 			popupBox = null;
-		}
-	}
-	
-	
-	//
-	
-	
-	public static class FxPopup extends PopupControl
-	{
-		public FxPopup(Parent content)
-		{
-			getScene().setRoot(content);
-	
-			setConsumeAutoHidingEvents(false);
-			setAutoHide(true);
-	        setAutoFix(true);
-	        setHideOnEscape(true);        
-		}
-		
-		
-		public void showRelative(Node owner, double dx, double dy)
-		{
-			Point2D p = owner.localToScreen(0, 0);
-			show(owner, p.getX() + dx, p.getY() + dy);
-		}
-	}
-	
-	
-	//
-	
-	
-	public static class PopupBox extends BorderPane
-	{
-		protected final CheckBox checkBox;
-		
-		
-		public PopupBox()
-		{
-			checkBox = new CheckBox("fail");
-			setLeft(checkBox);
 		}
 	}
 }
